@@ -57,31 +57,36 @@ async def handler(websocket):
     # Parse events received for "join" types
     async for message in websocket:
         event = json.loads(message)
+        assert event["type"] == "init"
+
         if "join" in event:
             # Second player joins the game
-            try:
-                await join(websocket, event["join"])
-            except KeyError:
-                await send_error(websocket, "Game not found")
+            await join(websocket, event["join"])
         else:
-            # First player starts the game
+            # First player starts a new game
             await start(websocket)
 
 async def play(websocket, game, player, connected):
-    # turns = itertools.cycle([PLAYER1, PLAYER2])
-    # player = next(turns)
-    #
-    # async for message in websocket:
-    #     data = json.loads(message)
-    #     if data["type"] == "play":
-    #         event = {
-    #             "type": "play",
-    #             "player": player,
-    #             "column": column,
-    #             "row": row
-    #         }
-    #         await websocket.send(json.dumps(event))
-    #     elif data["type"] == ""
+    message = await websocket.recv()
+    data = json.loads(message)
+    column = data["column"]
+    row = game.play(player, column)
+
+    if game.winner is not None:
+        event = {
+            "type": "win",
+            "winner": game.winner
+        }
+        await websocket.send(json.dumps(event))
+    else:
+        event = {
+            "type": "play",
+            "player": player,
+            "column": column,
+            "row": row
+        }
+        await websocket.send(json.dumps(event))
+        
 
 async def main():
     async with websockets.serve(handler, "", 8001):
