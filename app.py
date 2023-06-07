@@ -8,7 +8,7 @@ from connect4 import PLAYER1, PLAYER2, Connect4
 import logging
 import secrets
 import os
-import signals
+import signal
 
 logging.basicConfig(format="%(message)s", level=logging.DEBUG)
 
@@ -140,7 +140,7 @@ async def main():
     # Set the stop condition when receiving SIGTERM
     loop = asyncio.get_running_loop()
     stop = loop.create_future()
-    loop.add_signal_handler(signals.SIGTERM, stop.set_result, None)
+    loop.add_signal_handler(signal.SIGTERM, stop.set_result, None)
 
     port = int(os.environ.get("PORT", "8001"))
     async with websockets.serve(handler, "", port):
